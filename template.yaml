@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Apagado y encendido automatico - Kuailian
+Parameters:
+  PrefixFunctionName:
+    Type: String
+    Default: 'devops'
+    Description: Function name
+  TagKey:
+    Type: String
+    Default: 'programado'
+    Description: Tag-key
+  TagValue:
+    Type: String
+    Default: 'yes'
+    Description: Tag-value
+  StopScheduleCron:
+    Type: String
+    Default: 'cron(15 10 ? * MON-FRI *)'
+    Description: Cron expression (min horas ? * lunes-viernes *) UTC, ejemplo 1 cron(30 23 ? * MON-FRI *), ejemplo 2 cron(30 23 ? * MON-FRI *)
+  StartScheduleCron:
+    Type: String
+    Default: 'cron(25 06 ? * MON-FRI *)'
+    Description: Cron expression (min horas ? * lunes-viernes *) UTC ejemplo cron(00 14 ? * MON-FRI *), ejemplo 2 cron(30 23 ? * MON-FRI *)
+
+Resources:
+  StartScheduledFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub
+        - '${PREFIX}-lambda-scheduler-start'
+        - PREFIX: !Ref PrefixFunctionName
+      Handler: start-instances.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Policies:
+        - AmazonEC2FullAccess
+        - AmazonRDSFullAccess
+      Environment:
+        Variables:
+          KEY: !Ref TagKey
+          VALUE: !Ref TagValue
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref StartScheduleCron
+  StopScheduledFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      FunctionName: !Sub
+        - '${PREFIX}-lambda-scheduler-stop'
+        - PREFIX: !Ref PrefixFunctionName
+      Handler: stop-instances.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Policies:
+      - AmazonEC2FullAccess
+      - AmazonRDSFullAccess
+      Environment:
+        Variables: 
+          KEY : !Ref TagKey
+          VALUE : !Ref TagValue
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref StopScheduleCron

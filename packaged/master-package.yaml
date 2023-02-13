@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Create a Lambda function that logs something to the console from a cron
+  job in EventBridge
+Parameters:
+  PrefixFunctionName:
+    Type: String
+    Default: fullm-0000-app-apq-00
+    Description: Function name
+  TagKey:
+    Type: String
+    Default: aws:cloudformation:stack-name
+    Description: Tag-key
+  TagValue:
+    Type: String
+    Default: FULLM-0001-APP-AQ-00-Aurora-RDSAuroraStack-8PPL9IYIMJZ9
+    Description: Tag-value
+  StopScheduleCron:
+    Type: String
+    Default: cron(15 23 ? * MON-FRI *)
+    Description: Cron expression
+  StartScheduleCron:
+    Type: String
+    Default: cron(00 14 ? * MON-FRI *)
+    Description: Cron expression
+Resources:
+  StartScheduledFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://fullm-0000-app-ap-00-templates/templates/lambda-reboot/2022-11-09-18-11-27/f24197ea9866d08677474def0323668a
+      FunctionName:
+        Fn::Sub:
+        - ${PREFIX}-lambda-scheduler-start
+        - PREFIX:
+            Ref: PrefixFunctionName
+      Handler: start-instances.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Policies:
+      - AmazonEC2FullAccess
+      - AmazonRDSFullAccess
+      Environment:
+        Variables:
+          KEY:
+            Ref: TagKey
+          VALUE:
+            Ref: TagValue
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule:
+              Ref: StartScheduleCron
+    Metadata:
+      SamResourceId: StartScheduledFunction
+  StopScheduledFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://fullm-0000-app-ap-00-templates/templates/lambda-reboot/2022-11-09-18-11-27/f24197ea9866d08677474def0323668a
+      FunctionName:
+        Fn::Sub:
+        - ${PREFIX}-lambda-scheduler-stop
+        - PREFIX:
+            Ref: PrefixFunctionName
+      Handler: stop-instances.lambda_handler
+      Runtime: python3.9
+      MemorySize: 128
+      Policies:
+      - AmazonEC2FullAccess
+      - AmazonRDSFullAccess
+      Environment:
+        Variables:
+          KEY:
+            Ref: TagKey
+          VALUE:
+            Ref: TagValue
+      Events:
+        ScheduledFunction:
+          Type: Schedule
+          Properties:
+            Schedule:
+              Ref: StopScheduleCron
+    Metadata:
+      SamResourceId: StopScheduledFunction

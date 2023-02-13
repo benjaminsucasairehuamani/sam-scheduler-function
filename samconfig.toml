@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "instance-scheduler-sam-rds"
+s3_bucket = "devops-bash-templates"
+s3_prefix = "sam/instance-scheduler-sam-rds"
+region = "us-east-1"
+profile = "default"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+parameter_overrides = "PrefixFunctionName=\"devops\" TagKey=\"programado\" TagValue=\"yes\" StopScheduleCron=\"cron(15 10 ? * MON-FRI *)\" StartScheduleCron=\"cron(25 06 ? * MON-FRI *)\""
